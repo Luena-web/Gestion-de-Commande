@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
         ]);
+        $middleware->trustProxies(at: '*');
 
         // Ne pas rediriger les utilisateurs non authentifiés
         // vers une page de connexion Web.
@@ -31,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 'message' => $exception->getMessage(),
             ], 409);
         });
+        
 
         // Retourner des réponses JSON pour les requêtes API.
         $exceptions->shouldRenderJsonWhen(
