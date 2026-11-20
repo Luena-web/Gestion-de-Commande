@@ -7,6 +7,20 @@ l’API répond avec le statut `422` et le format standard Laravel (`message` et
 `errors`). Une ressource introuvable répond `404`; une suppression impossible
 à cause de relations existantes répond `409`.
 
+### CORS pour le front-end
+
+L’API autorise les origines listées dans `CORS_ALLOWED_ORIGINS`, séparées par
+des virgules et sans slash final. Par défaut, le projet autorise les deux
+origines Vite locales : `http://localhost:5173` et
+`http://127.0.0.1:5173`.
+
+Configurez cette variable dans l’environnement de déploiement avec l’origine
+exacte du front (schéma, domaine et port éventuel), par exemple
+`https://mon-frontend.example.com`. N’ajoutez pas de chemin comme `/login` et
+n’utilisez pas `*` en production. Ce projet transmet le jeton Sanctum dans
+l’en-tête `Authorization: Bearer ...`; les credentials CORS/cookies ne sont donc
+pas activés.
+
 ## Authentification et autorisations
 
 Les routes protégées utilisent `auth:sanctum`.
@@ -26,6 +40,7 @@ Les routes protégées utilisent `auth:sanctum`.
 |---|---|---|---|
 | `POST` | `/register` | Public | Créer un compte client |
 | `POST` | `/mobile/login` | Public | Connexion et émission d’un jeton Sanctum |
+| `POST` | `/google/login` | Public | Inscrire ou connecter un compte après vérification d’un ID token Google |
 | `POST` | `/mobile/logout` | Authentifié | Révoquer le jeton mobile courant |
 | `POST` | `/login` | Session web | Connexion web |
 | `POST` | `/logout` | Session web | Fermer la session web courante |
@@ -41,6 +56,35 @@ Exemple de connexion mobile :
 ```
 
 Envoyer le jeton retourné dans l’en-tête `Authorization: Bearer <jeton>`.
+
+### Connexion Google
+
+Le front utilise le SDK Google Identity Services pour récupérer l’ID token,
+puis le transmet au backend. Le backend vérifie sa signature et son audience avec
+le client ID configuré par `GOOGLE_CLIENT_ID`. Le même endpoint peut être utilisé
+par le front web et l’application mobile.
+
+```http
+POST /api/v1/google/login
+Content-Type: application/json
+```
+
+```json
+{
+  "credential": "<ID token Google>"
+}
+```
+
+La réponse contient un jeton Sanctum et l’utilisateur. Un nouvel utilisateur
+est créé comme `client`, avec une adresse e-mail vérifiée et sans numéro de
+téléphone; le profil pourra être complété plus tard. Si l’adresse e-mail vérifiée
+correspond à un compte existant non encore lié, l’identité Google lui est liée.
+Un compte déjà lié à une autre identité Google est refusé. Ne jamais transmettre
+ni accepter directement un `google_id` ou un rôle fourni par le client.
+
+Dans Google Cloud Console, créer un OAuth Client ID de type application Web,
+ajouter les origines JavaScript autorisées du front, puis définir `GOOGLE_CLIENT_ID`
+dans l’environnement Laravel et utiliser le même Client ID dans le SDK du front.
 
 ## Catalogue
 

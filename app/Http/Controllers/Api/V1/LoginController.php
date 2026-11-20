@@ -8,7 +8,6 @@ use App\Http\Requests\LoginRequest;
 use App\Services\Login\Interfaces\LoginServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Laravel\Sanctum\PersonalAccessToken;
 
 class LoginController extends Controller
@@ -18,53 +17,13 @@ class LoginController extends Controller
     ) {}
 
     /**
-     * Connexion pour React Web
-     */
-    public function loginWeb(LoginRequest $request): JsonResponse
-    {
-        $dto = LoginDTO::fromArray($request->validated());
-
-        $user = $this->loginService->login($dto);
-
-        Auth::guard('web')->login($user);
-
-        $request->session()->regenerate();
-
-        return response()->json([
-            'message' => 'Connexion réussie.',
-            'data' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'telephone' => $user->telephone,
-                'role' => $user->role,
-            ],
-        ]);
-    }
-
-    /**
-     * Fermer la session web courante.
-     */
-    public function logoutWeb(Request $request): JsonResponse
-    {
-        Auth::guard('web')->logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return response()->json([
-            'message' => 'Déconnexion réussie.',
-        ]);
-    }
-
-    /**
-     * Connexion pour React Native
+     * Connexion mobile avec jeton Sanctum.
      */
     public function loginMobile(LoginRequest $request): JsonResponse
     {
         $dto = LoginDTO::fromArray($request->validated());
 
         $user = $this->loginService->login($dto);
-
         $token = $user->createToken('mobile')->plainTextToken;
 
         return response()->json([
@@ -81,9 +40,49 @@ class LoginController extends Controller
     }
 
     /**
-     * Révoquer le jeton mobile actuellement utilisé.
+     * Révoquer le jeton mobile courant.
      */
     public function logoutMobile(Request $request): JsonResponse
+    {
+        $token = $request->user()->currentAccessToken();
+
+        if ($token instanceof PersonalAccessToken) {
+            $token->delete();
+        }
+
+        return response()->json([
+            'message' => 'Déconnexion réussie.',
+        ]);
+    }
+
+    /**
+     * Connexion web avec jeton Sanctum.
+     */
+    public function loginWeb(LoginRequest $request): JsonResponse
+    {
+        $dto = LoginDTO::fromArray($request->validated());
+
+        $user = $this->loginService->login($dto);
+
+        $token = $user->createToken('web')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Connexion réussie.',
+            'token' => $token,
+            'data' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'telephone' => $user->telephone,
+                'role' => $user->role,
+            ],
+        ]);
+    }
+
+    /**
+     * Révoquer le jeton web courant.
+     */
+    public function logoutWeb(Request $request): JsonResponse
     {
         $token = $request->user()->currentAccessToken();
 

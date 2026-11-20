@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CategorieController;
 use App\Http\Controllers\Api\V1\CommandeController;
+use App\Http\Controllers\Api\V1\GoogleAuthController;
 use App\Http\Controllers\Api\V1\LoginController;
 use App\Http\Controllers\Api\V1\ProduitController;
 use Illuminate\Http\Request;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\Route;
 
 // Inscription
 Route::post('v1/register', [AuthController::class, 'register']);
+Route::post('v1/google/login', [GoogleAuthController::class, 'login'])
+    ->middleware('throttle:10,1');
 
 // Authentification React Web (token Sanctum)
 Route::post('v1/web/login', [LoginController::class, 'loginWeb']);

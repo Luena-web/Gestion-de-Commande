@@ -40,6 +40,8 @@ Le catalogue accepte la recherche `search`, les filtres `categorie_id`,
 
 L’inscription publique crée toujours un compte `client`. Elle ne permet pas de
 choisir le rôle. Les écritures du catalogue sont réservées aux comptes `admin`.
+La connexion Google est activée avec `GOOGLE_CLIENT_ID`; configurez le même
+Client ID dans le SDK Google du front.
 Pour promouvoir manuellement un compte existant en administrateur :
 
 ```powershell

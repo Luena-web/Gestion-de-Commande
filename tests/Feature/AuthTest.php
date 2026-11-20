@@ -65,15 +65,23 @@ class AuthTest extends TestCase
         $this->assertDatabaseCount('personal_access_tokens', 0);
     }
 
-    public function test_web_user_can_end_the_current_session(): void
+    public function test_web_user_can_revoke_the_current_access_token(): void
     {
         $user = User::factory()->create();
-        $this->actingAs($user, 'web');
 
-        $this->postJson('/api/v1/logout')
+        $loginResponse = $this->postJson('/api/v1/web/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ])->assertOk();
+
+        $token = $loginResponse->json('token');
+        $this->assertNotEmpty($token);
+
+        $this->withToken($token)
+            ->postJson('/api/v1/web/logout')
             ->assertOk()
             ->assertJsonPath('message', 'Déconnexion réussie.');
 
-        $this->assertGuest('web');
+        $this->assertDatabaseCount('personal_access_tokens', 0);
     }
 }
