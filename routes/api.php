@@ -1,4 +1,3 @@
-
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
@@ -13,16 +12,13 @@ use Illuminate\Support\Facades\Route;
 // ROUTES PUBLIQUES
 // ========================================
 
-// Récupérer les informations de l'utilisateur connecté
-// Cette route nécessite une authentification.
-Route::get('v1/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
-
 // Inscription
 Route::post('v1/register', [AuthController::class, 'register']);
 
-// Connexion Mobile
+// Authentification React Web (token Sanctum)
+Route::post('v1/web/login', [LoginController::class, 'loginWeb']);
+
+// Authentification React Native (session)
 Route::post('v1/mobile/login', [LoginController::class, 'loginMobile']);
 
 // ========================================
@@ -30,15 +26,11 @@ Route::post('v1/mobile/login', [LoginController::class, 'loginMobile']);
 // ========================================
 
 Route::prefix('v1')->group(function () {
-
-    // Consultation des catégories
     Route::get('/categories', [CategorieController::class, 'index']);
     Route::get('/categories/{id}', [CategorieController::class, 'show']);
 
-    // Consultation des produits
     Route::get('/produits', [ProduitController::class, 'index']);
     Route::get('/produits/{id}', [ProduitController::class, 'show']);
-
 });
 
 // ========================================
@@ -46,20 +38,34 @@ Route::prefix('v1')->group(function () {
 // ========================================
 
 Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
+
+    // Déconnexion React Web
+    Route::post('/web/logout', [LoginController::class, 'logoutWeb']);
+
+    // Déconnexion React Native
     Route::post('/mobile/logout', [LoginController::class, 'logoutMobile']);
 
+    // Informations utilisateur connecté
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
+
+    // Gestion des commandes
     Route::get('/commandes', [CommandeController::class, 'index']);
     Route::get('/commandes/{id}', [CommandeController::class, 'show']);
     Route::post('/commandes', [CommandeController::class, 'store']);
     Route::patch('/commandes/{id}/confirm', [CommandeController::class, 'confirm']);
 
+    // Gestion réservée aux administrateurs
     Route::middleware('admin')->group(function () {
-        // Gestion du catalogue réservée aux administrateurs.
+
+        // Catégories
         Route::post('/categories', [CategorieController::class, 'store']);
         Route::put('/categories/{id}', [CategorieController::class, 'update']);
         Route::patch('/categories/{id}', [CategorieController::class, 'update']);
         Route::delete('/categories/{id}', [CategorieController::class, 'destroy']);
 
+        // Produits
         Route::post('/produits', [ProduitController::class, 'store']);
         Route::put('/produits/{id}', [ProduitController::class, 'update']);
         Route::patch('/produits/{id}', [ProduitController::class, 'update']);
